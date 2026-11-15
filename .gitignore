@@ -7,3 +7,12 @@ __pycache__/
 bin/
 obj/
 *.suo
+
+# Build and runtime output
+dist/
+*.log
+*.bak
+revit-*.json
+.env.*
+*.pfx
+*.key

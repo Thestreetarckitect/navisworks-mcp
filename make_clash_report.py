@@ -1,7 +1,10 @@
 """Generate a self-contained HTML clash report from the Navisworks addin bridge."""
-import json, urllib.request, html, datetime, sys
+import json, urllib.request, html, datetime, os, sys
 
-TEST = "05.04.00_Duct vs Electrical"
+# Usage: python make_clash_report.py "<clash test name>" [output.html]
+if len(sys.argv) < 2:
+    sys.exit('Usage: python make_clash_report.py "<clash test name>" [output.html]')
+TEST = sys.argv[1]
 BASE = "http://localhost:8765"
 FT_TO_IN = 12.0
 FT_TO_MM = 304.8
@@ -149,7 +152,7 @@ function render(){{
 render();
 </script></body></html>"""
 
-out = r"C:\Users\llampkin\Downloads\clash_duct_vs_electrical.html"
+out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.expanduser("~"), "Downloads", "clash_report.html")
 with open(out, "w", encoding="utf-8") as f:
     f.write(HTML)
 print(f"WROTE {out}")

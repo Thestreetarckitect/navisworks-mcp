@@ -1,6 +1,6 @@
-# Navisworks MCP Bridge
+# TSA Navisworks 2025 - 2027 MCP
 
-Claude MCP integration for Autodesk Navisworks Manage 2027.  
+Claude MCP integration for Autodesk Navisworks Manage 2025, 2026 and 2027, by The Street Arckitect.  
 Two-piece architecture: a C# addin running inside Navisworks exposes an HTTP API on `localhost:8765`, and a Python MCP server bridges that API to Claude.
 
 ---
@@ -12,30 +12,53 @@ Claude (MCP client)
       ↕  stdio
 Python MCP server (server_http.py)
       ↕  HTTP localhost:8765
-C# Addin (MCPBridge.dll) inside Navisworks Manage 2027
+C# Addin (MCPBridge.dll) inside Navisworks
       ↕  Navisworks API
 .nwd / .nwf model
 ```
 
 ---
 
+## Status by Navisworks year
+
+| Year | Prebuilt DLL in this repo | How to get it |
+|------|---------------------------|---------------|
+| 2027 | Yes, `release/2027/` | `.\Install.ps1 -Year 2027` |
+| 2026 | No | `.\Build.ps1 -Year 2026`, then `.\Install.ps1 -Year 2026` |
+| 2025 | No | `.\Build.ps1 -Year 2025`, then `.\Install.ps1 -Year 2025` |
+
+The addin compiles against the Navisworks API files in your install folder, so each year needs its own build on a machine with that Navisworks version and the .NET SDK. Only 2027 has been tested. If a 2025 or 2026 build fails, `Build.ps1` stops with the compiler error. Please open an issue with the first error line.
+
+---
+
 ## Install
 
-### 1. Deploy the addin (requires admin)
+Run PowerShell **as Administrator** from the repository folder. Close Navisworks first.
 
 ```powershell
-# Run as Administrator
-.\elevate_deploy.ps1
+git clone https://github.com/Thestreetarckitect/TSA-Navisworks-2025-2027-MCP
+cd TSA-Navisworks-2025-2027-MCP
+powershell -ExecutionPolicy Bypass -File .\Install.ps1 -Year 2027
 ```
 
-Copies `release\MCPBridge.dll` to:
+`-ExecutionPolicy Bypass` applies to this one run only. The installer checks every file against `SHA256SUMS`, copies the DLL to
+
 ```
 C:\Program Files\Autodesk\Navisworks Manage 2027\Plugins\MCPBridge\
 ```
 
-> Deploying to `%APPDATA%\Autodesk\...` does **not** load the addin — must be in Program Files.
+Use `-WhatIf` to preview. Use `-Uninstall` to remove it.
 
-### 2. Configure Claude MCP
+> Deploying to `%APPDATA%\Autodesk\...` does **not** load the addin. It must be in Program Files.
+
+### Build for 2025 or 2026
+
+```powershell
+.\Build.ps1 -Year 2026
+.\Install.ps1 -Year 2026
+```
+
+### Configure Claude MCP
 
 Add to `~/.claude.json` under `mcpServers`:
 
@@ -46,11 +69,11 @@ Add to `~/.claude.json` under `mcpServers`:
 }
 ```
 
-### 3. Open Navisworks
+### Open Navisworks
 
-Open Navisworks Manage 2027 → **Add-Ins** ribbon tab → **MCP Bridge** button confirms the listener started.
+Open Navisworks, go to the **Add-Ins** ribbon tab, and click **MCP Bridge**. It confirms the listener started.
 
-### 4. Verify
+### Verify
 
 ```powershell
 Invoke-RestMethod http://localhost:8765/health
@@ -58,13 +81,17 @@ Invoke-RestMethod http://localhost:8765/health
 
 Expected: `ok v2.1  35 routes`
 
+To check the repository files themselves, run `.\tools\verify.ps1`. See [SECURITY.md](SECURITY.md) before you use it on a live model.
+
 ---
 
 ## Requirements
 
-- Autodesk Navisworks Manage **2027** (Freedom not supported)
-- Python 3.12+ — full path required in MCP config
+- Autodesk Navisworks Manage **2025, 2026 or 2027** (Simulate and Freedom are not supported. Clash Detective is a Manage feature)
+- Windows 10 or 11 x64, Administrator rights for the install
+- Python 3.12+. Full path required in the MCP config
 - `pip install mcp`
+- .NET SDK, only if you build 2025 or 2026 yourself
 
 ---
 
@@ -442,21 +469,22 @@ No parameters.
 
 | File | Purpose |
 |------|---------|
-| `server_http.py` | Python MCP server — bridges Claude to Navisworks HTTP API |
+| `server_http.py` | Python MCP server. Bridges Claude to the Navisworks HTTP API |
 | `MCPBridgePlugin.cs` | C# Navisworks addin source |
 | `ClashGroupHandlers.cs` | Clash group handler source |
-| `NavisworksMcpAddin.csproj` | VS project (targets net48, Navisworks API v24) |
-| `release/MCPBridge.dll` | Prebuilt addin DLL — deploy this |
-| `release/MCPBridge.pdb` | Debug symbols |
-| `elevate_deploy.ps1` | Deploy script (copies DLL to Program Files, requires admin) |
-| `make_clash_report.py` | Utility: generate clash report from Navisworks via MCP |
+| `NavisworksMcpAddin.csproj` | Project file (net48). Takes `NavisworksYear` or `NavisworksInstallDir` |
+| `Build.ps1` | Build the addin for 2025, 2026 or 2027. Writes `dist/<year>/` with checksums |
+| `Install.ps1` | Checksum-verified installer. Needs Administrator |
+| `release/2027/` | Prebuilt 2027 addin, debug symbols and `SHA256SUMS` |
+| `tools/verify.ps1`, `tools/verify.py` | Check the files against their checksums |
+| `make_clash_report.py` | Generate an HTML clash report: `python make_clash_report.py "<test name>" [out.html]` |
+| `SECURITY.md` | What the bridge exposes and how to use it safely |
 
 ---
 
 ## Known Gotchas
 
-- `.addin` manifest is Revit format — Navisworks ignores it. Remove it.
-- `Install-Addin.ps1` from upstream has a parse error — use `elevate_deploy.ps1` instead.
-- Navisworks 2020 / 2022 also installed but **not** supported (API version mismatch).
-- Python scripts dir is not on PATH — use full `python.exe` path in MCP config.
+- Navisworks 2020 to 2024 are not supported.
+- Python scripts dir is not on PATH. Use the full `python.exe` path in the MCP config.
 - Addin log: `%TEMP%\navisworks_mcp_addin.log`
+- `Install.ps1` replaces the old `elevate_deploy.ps1` and `Install-Addin.ps1`. Those scripts are gone.
