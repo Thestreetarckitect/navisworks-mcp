@@ -47,8 +47,11 @@
        whatever System.Text.Json copy Navisworks itself happens to load. -->
 
   <!-- Navisworks API references — pass install dir on the command line if non-default -->
+  <!-- Build.ps1 passes NavisworksInstallDir. For a manual build, set
+       -p:NavisworksYear=2025|2026|2027 (default 2027) or pass the folder. -->
   <PropertyGroup>
-    <NavisworksInstallDir Condition="'$(NavisworksInstallDir)' == ''">C:\Program Files\Autodesk\Navisworks Manage 2027</NavisworksInstallDir>
+    <NavisworksYear Condition="'$(NavisworksYear)' == ''">2027</NavisworksYear>
+    <NavisworksInstallDir Condition="'$(NavisworksInstallDir)' == ''">C:\Program Files\Autodesk\Navisworks Manage $(NavisworksYear)</NavisworksInstallDir>
   </PropertyGroup>
 
   <ItemGroup>

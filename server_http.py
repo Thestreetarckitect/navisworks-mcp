@@ -9,7 +9,7 @@ Architecture:
 
 Prerequisites:
     1. Build & install the .NET addin (see addin/README.md).
-    2. Open Navisworks Manage 2026/2027 — the addin auto-starts on
+    2. Open Navisworks Manage 2025, 2026 or 2027. The addin auto-starts on
        http://localhost:8765
     3. Configure Claude Desktop to launch this script (see README).
 
@@ -437,7 +437,7 @@ def _selftest() -> None:
         print("\nAddin not reachable. Checklist:", file=sys.stderr)
         print(" 1. Is Navisworks open?", file=sys.stderr)
         print(" 2. Is the MCP Bridge plugin installed?", file=sys.stderr)
-        print("    Look for: %APPDATA%\\Autodesk\\Navisworks Manage 2027\\Plugins\\MCPBridge\\", file=sys.stderr)
+        print("    Look for: C:\\Program Files\\Autodesk\\Navisworks Manage <year>\\Plugins\\MCPBridge\\", file=sys.stderr)
         print(" 3. In Navisworks: Add-Ins ribbon → click 'MCP Bridge' to verify.", file=sys.stderr)
         sys.exit(1)
     print("\nAddin reachable. Querying document info...\n", file=sys.stderr)
@@ -464,7 +464,7 @@ To wire into Claude Desktop, edit:
       "mcpServers": {
         "navisworks": {
           "command": "python",
-          "args": ["E:\\MCP\\Navisworks_MCP\\server_http.py"]
+          "args": ["C:\\path\\to\\server_http.py"]
         }
       }
     }
